@@ -17,16 +17,11 @@ const mongoDbConnect = require("./connection");
 mongoDbConnect("mongodb://127.0.0.1:27017/short-url");
 
 const urlRouter = require("./routes/urlRouter");
+const staticRouter = require("./routes/staticRouter");
 
 app.use('/url', urlRouter);
 
-app.use('/', (req, res) => {
-    let people = ['geddy', 'neil', 'alex'];
-
-    res.render("homepage", {
-        people,
-    });
-});
+app.use('/', staticRouter);
 
 
 app.listen(port, () => console.log('Server started!'));

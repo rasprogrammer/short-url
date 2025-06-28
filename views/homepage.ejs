@@ -12,24 +12,49 @@
     <div class="container p-5">
         <h2 class="text-center">URL-Shortner</h2>
 
-        <div class="input-group my-3">
-            <input type="text" class="form-control" name="url" placeholder="Paste your url here...">
-            <button type="button" class="btn btn-primary" id="generate">Generate</button>
-        </div>
+        <form method="post" action="/url">
+            <div class="input-group my-3">
+                <input type="text" class="form-control" name="url" id="url" placeholder="Paste your url here...">
+                <button type="submit" class="btn btn-primary" id="generate">Generate</button>
+            </div>
+        </form>
 
-        <div class="generated-url p-3 bg-secondary text-center d-none">
-            Your Short URL : <a href="https://rajivtech.com" class="text-white">https://rajivtech.com</a>
-        </div>
+        <% if (locals.shortedID) { %>
+            <div class="generated-url p-3 bg-secondary text-center">
+                Your Short URL : <a href="http://localhost:3000/url/<%= shortedID %>" class="text-white">
+                    <%= shortedID %>
+                </a>
+            </div>
+            <% } %>
 
-        <table class="table table-bordered">
-            <tr>
-                <th>Sno.</th>
-                <th>Original URL</th>
-                <th>Short URL</th>
-                <th>Clicks</th>
-                <th>Analitics</th>
-            </tr>
-        </table>
+                <% if (locals.urls) { %>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Sno.</th>
+                            <th>Original URL</th>
+                            <th>Short URL</th>
+                            <th>Clicks</th>
+                        </tr>
+                        <% let sno=1; urls.forEach(url=> { %>
+                            <tr>
+                                <td>
+                                    <%= sno %>
+                                </td>
+                                <td>
+                                    <%= url.originalUrl %>
+                                </td>
+                                <td>
+                                    <a href="http://localhost:3000/url/<%= url.shortId %>" target="_blank">
+                                        <%= url.shortId %>
+                                    </a>
+                                </td>
+                                <td>
+                                    <%= url.visitHistory.length %>
+                                </td>
+                            </tr>
+                            <% sno++; }); %>
+                    </table>
+                    <% } %>
     </div>
 </body>
 

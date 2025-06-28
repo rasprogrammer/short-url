@@ -5,12 +5,17 @@ async function generateUrlShort(req, res) {
     if (!req.body.url) {
         return res.status(400).json({ error: "Please input url" });
     }
+
+    const shortedID = shortid.generate();
     await Url.create({
-        shortId: shortid.generate(),
+        shortId: shortedID,
         originalUrl: req.body.url
     });
 
-    return res.status(200).json({ message: "success" });
+    return res.render("homepage", {
+        shortedID: shortedID
+    });
+    // return res.status(200).json({ message: "success" });
 }
 
 async function handleShortid(req, res) {
