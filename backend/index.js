@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 import express from "express";
-import { mongoDbConnect } from "./db";
+import { mongoDbConnect } from "./src/db";
 // import path from "path";
 
 const app = express();
