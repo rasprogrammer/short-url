@@ -16,7 +16,6 @@ mongoDbConnect(process.env.DATABASE_URL);
 import urlRouter from "./src/routes/url.routes";
 import staticRouter from "./routes/staticRouter";
 
-app.use();
 
 app.use('/api/v1/urls', urlRouter);
 

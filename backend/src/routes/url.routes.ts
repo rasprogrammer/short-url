@@ -1,11 +1,26 @@
 import express from "express";
-import { generateUrlShort, handleShortid } from "../controllers/urlController.js";
+// import { generateUrlShort, handleShortid } from "../controllers/urlController.js";
 
 const router = express.Router();
 
+// create new url
+router.post('/', (req, res) => {});
 
-router.post('/', generateUrlShort);
+// Get user urls
+router.get('/', (req, res) => {});
 
-router.get('/:shortId', handleShortid);
+// Get single url
+router.get('/:id', (req, res) => {});
+
+// Update URL
+router.put('/:id', (req, res) => {});
+
+router.delete('/:id', (req, res) => {});
+
+// Get URL Analytics
+router.get('/:id/analytics', (req, res) => {});
+
+// Click Logs
+router.get('/:id/clicks', (req, res) => {});
 
 export default router;
