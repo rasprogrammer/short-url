@@ -13,10 +13,12 @@ app.use(express.urlencoded({ extended: true }));
 // Database connection
 mongoDbConnect(process.env.DATABASE_URL);
 
-import urlRouter from "./routes/urlRouter";
+import urlRouter from "./src/routes/url.routes";
 import staticRouter from "./routes/staticRouter";
 
-app.use('/url', urlRouter);
+app.use();
+
+app.use('/api/v1/urls', urlRouter);
 
 app.use('/', staticRouter);
 
