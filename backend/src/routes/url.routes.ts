@@ -1,5 +1,6 @@
 import express from "express";
 import { auth } from "../middlewares/auth.js";
+import { createShortURL, deleteUrl, getAllUrls, getUrl, updateUrl } from "../controllers/url.controller.js";
 // import { generateUrlShort, handleShortid } from "../controllers/urlController.js";
 
 const router = express.Router();
@@ -7,23 +8,18 @@ const router = express.Router();
 router.use(auth);
 
 // Get user urls
-router.get('/', (req, res) => {
-    return res.status(200).json({
-        success: true, 
-        message: "URL Dashboard"
-    });
-});
+router.get('/', getAllUrls);
 
 // create new url
-router.post('/', (req, res) => {});
+router.post('/', createShortURL);
 
 // Get single url
-router.get('/:id', (req, res) => {});
+router.get('/:id', getUrl);
 
 // Update URL
-router.put('/:id', (req, res) => {});
+router.put('/:id', updateUrl);
 
-router.delete('/:id', (req, res) => {});
+router.delete('/:id', deleteUrl);
 
 // Get URL Analytics
 router.get('/:id/analytics', (req, res) => {});

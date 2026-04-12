@@ -38,6 +38,7 @@ const urlSchema = new Schema({
     custom_alias: {
         type: String,
         unique: true,
+        sparse: true
     },
     domain_id: {
         type: Schema.Types.ObjectId,
@@ -54,7 +55,7 @@ const urlSchema = new Schema({
     },
     password_hash: String,
     click_count: {
-        type: Int32Array,
+        type: Number,
         default: 0,
     }
 }, {
