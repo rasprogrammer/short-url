@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
-import { CreateUserSchema } from "../validations/auth.js";
+import { CreateUserSchema, UserLoginSchema } from "../validations/auth.js";
 import User from "../models/userModel.js";
-import { hashPassword } from "../utils/bcrypt.js";
+import { hashPassword, verifyPassword } from "../utils/bcrypt.js";
+import { generateToken } from "../utils/jwt.js";
 
 
 export const register = async (req: Request, res: Response) => {
@@ -22,8 +23,6 @@ export const register = async (req: Request, res: Response) => {
         const userExist = await User.findOne({
             email
         });
-
-        console.log('userExist > ', userExist);
 
         if (userExist) {
             res.status(400).json({
@@ -63,6 +62,57 @@ export const register = async (req: Request, res: Response) => {
 };
 
 
-export const login = async () => {
+export const login = async (req: Request, res: Response) => {
+    try {
+        // Validate login credentials 
+        const parsedData = UserLoginSchema.safeParse(req.body);
+        if (!parsedData.success) {
+            res.status(400).json({
+                success: false, 
+                error: parsedData.error
+            });
+            return;
+        }
 
+        const { email, password } = parsedData.data;
+
+        // Check user exists in db or not 
+        const user = await User.findOne({
+            email, 
+        });
+
+        if (!user) {
+            res.status(401).json({
+                success: false, 
+                error: "Invalid email or password "
+            });
+            return;
+        }
+
+        // Compare password 
+        const isPasswordValid = await verifyPassword(password, user.password_hash as string);
+        if (!isPasswordValid) {
+            res.status(401).json({
+                success: false, 
+                error: "Invalid email or password"
+            });
+            return;
+        }
+
+        const token = generateToken(user._id.toString());
+
+        return res.status(200).json({
+            success: true, 
+            message: "Login Successfully", 
+            token
+        });
+
+    } catch (error) {
+        console.log('Login Error: ', error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error"
+        });
+        return;
+    }
 };

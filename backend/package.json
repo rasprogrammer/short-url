@@ -13,11 +13,13 @@
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "bcrypt": "^6.0.0",
     "bootstrap": "^5.3.7",
     "dotenv": "^17.4.1",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.16.1",
     "nanoid": "^5.1.7",
     "nodemon": "^3.1.10",
