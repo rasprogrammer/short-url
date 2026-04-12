@@ -1,0 +1,4 @@
+import type { NextFunction, Response } from "express";
+import type { AuthRequest } from "../utils/request-types.js";
+export declare const auth: (req: AuthRequest, res: Response, next: NextFunction) => void;
+//# sourceMappingURL=auth.d.ts.map
