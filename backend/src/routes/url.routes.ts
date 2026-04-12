@@ -1,6 +1,6 @@
 import express from "express";
 import { auth } from "../middlewares/auth.js";
-import { createShortURL, deleteUrl, getAllUrls, getUrl, updateUrl } from "../controllers/url.controller.js";
+import { createShortURL, deleteUrl, getAllUrls, getClickLogs, getUrl, getUrlAnalytics, updateUrl } from "../controllers/url.controller.js";
 // import { generateUrlShort, handleShortid } from "../controllers/urlController.js";
 
 const router = express.Router();
@@ -19,12 +19,13 @@ router.get('/:id', getUrl);
 // Update URL
 router.put('/:id', updateUrl);
 
+// Delete URL
 router.delete('/:id', deleteUrl);
 
 // Get URL Analytics
-router.get('/:id/analytics', (req, res) => {});
+router.get('/:id/analytics', getUrlAnalytics);
 
 // Click Logs
-router.get('/:id/clicks', (req, res) => {});
+router.get('/:id/clicks', getClickLogs);
 
 export default router;
