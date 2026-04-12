@@ -1,0 +1,6 @@
+import express from "express";
+const router = express.Router();
+router.post('/', (req, res) => { });
+router.delete('/:id', (req, res) => { });
+export default router;
+//# sourceMappingURL=api-key.routes.js.map
