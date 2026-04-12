@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import type { AuthRequest } from "../utils/request-types.js";
 import { AddDomainSchema, VerifyDomainSchema } from "../validations/domain.js";
 import Domain from "../models/domainModel.js";
