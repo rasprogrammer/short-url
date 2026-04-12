@@ -17,7 +17,8 @@ const { Schema, model } = mongoose;
 const domainSchema = new Schema({
     user_id: {
         type: Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true
     },
     domain_name: {
         type: String,
