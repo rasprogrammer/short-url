@@ -1,1 +1,1 @@
-{"version":3,"file":"redirect.controller.d.ts","sourceRoot":"","sources":["../../src/controllers/redirect.controller.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAIjD,eAAO,MAAM,cAAc,GAAU,KAAK,OAAO,EAAE,KAAK,QAAQ,uDA8B/D,CAAA"}
+{"version":3,"file":"redirect.controller.d.ts","sourceRoot":"","sources":["../../src/controllers/redirect.controller.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAOjD,eAAO,MAAM,cAAc,GAAU,KAAK,OAAO,EAAE,KAAK,QAAQ,uDAmD/D,CAAA"}

@@ -2,6 +2,7 @@ import { generateShortCode } from "../utils/generateShortCode.js";
 import Url from "../models/urlModel.js";
 import { CreateShortURLSchema, UpdateShortURLSchema } from "../validations/url.js";
 import { BASE_URL } from "../config/env.js";
+import UrlClick from "../models/urlClickModel.js";
 export const createShortURL = async (req, res) => {
     try {
         const userId = req.auth?.id;
@@ -205,6 +206,96 @@ export const deleteUrl = async (req, res) => {
     }
     catch (error) {
         console.log("Delete Short URL error: ", error);
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error"
+        });
+    }
+};
+export const getUrlAnalytics = async (req, res) => {
+    try {
+        const userId = req.auth?.id;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: "Unauthorized user"
+            });
+        }
+        const url_id = req.params.id;
+        if (!url_id) {
+            return res.status(400).json({
+                success: false,
+                error: "URL id not provided"
+            });
+        }
+        const url = await Url.findOne({
+            user_id: userId,
+            _id: url_id
+        });
+        if (!url) {
+            return res.status(404).json({
+                success: false,
+                error: "URL not found"
+            });
+        }
+        const urlAnalytics = await UrlClick.find({
+            url_id
+        });
+        return res.status(200).json({
+            success: true,
+            message: "URL Analytics details fetched successfully",
+            data: {
+                urlAnalytics
+            }
+        });
+    }
+    catch (error) {
+        console.log("Get URL Analytics error: ", error);
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error"
+        });
+    }
+};
+export const getClickLogs = async (req, res) => {
+    try {
+        const userId = req.auth?.id;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: "Unauthorized user"
+            });
+        }
+        const url_id = req.params.id;
+        if (!url_id) {
+            return res.status(400).json({
+                success: false,
+                error: "URL id not provided"
+            });
+        }
+        const url = await Url.findOne({
+            user_id: userId,
+            _id: url_id
+        });
+        if (!url) {
+            return res.status(404).json({
+                success: false,
+                error: "URL not found"
+            });
+        }
+        const urlDetails = await UrlClick.find({
+            url_id
+        });
+        return res.status(200).json({
+            success: true,
+            message: "URL click logs fetched successfully",
+            data: {
+                urlDetails
+            }
+        });
+    }
+    catch (error) {
+        console.log("Get Click Logs error: ", error);
         return res.status(500).json({
             success: false,
             error: "Internal server error"
