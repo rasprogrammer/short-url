@@ -20,6 +20,10 @@ export const passwordSchema = z
     .trim()
     .optional();
 
+export const isActiveSchema = z
+    .boolean()
+    .optional();
+
 export const CreateShortURLSchema = z.object({
     original_url: originalUrlSchema,
     custom_alias: customAliasSchema,
@@ -27,9 +31,11 @@ export const CreateShortURLSchema = z.object({
     password: passwordSchema
 });
 
+
 export const UpdateShortURLSchema = z.object({
-    original_url: originalUrlSchema,
-    custom_alias: customAliasSchema,
-    expires_at: expiresAtSchema,
-    password: passwordSchema
+    original_url: originalUrlSchema.optional(),
+    custom_alias: customAliasSchema.optional(),
+    expires_at: expiresAtSchema.optional(),
+    password: passwordSchema.optional(),
+    is_active: isActiveSchema.optional()
 })

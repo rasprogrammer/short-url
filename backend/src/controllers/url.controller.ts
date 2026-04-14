@@ -31,8 +31,6 @@ export const createShortURL = async (req: AuthRequest, res: Response) => {
         // Generate short code 
         let shortCode = generateShortCode();
 
-        console.log('before custom alias');
-
         // Validate custom alias
         if (typeof custom_alias === 'string' && custom_alias.length > 0) {
             const base62Regex = /^[0-9a-zA-Z]+$/;
@@ -44,8 +42,6 @@ export const createShortURL = async (req: AuthRequest, res: Response) => {
             }
             shortCode = custom_alias;
         }
-
-        console.log('after custom alias');
 
         // Validate this Short URL already exist in database or not
         const existingShorURL = await Url.findOne({
@@ -70,13 +66,9 @@ export const createShortURL = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        console.log('before password');
-
         // Protect URL to password
         const hashedPassword = password ? await hashPassword(password) : null;
 
-        console.log('after password');
-        
         // Create short URL in db 
         await Url.create({
             user_id: userId,
@@ -209,7 +201,7 @@ export const updateUrl = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        const { original_url, custom_alias, expires_at, password } = parsedData.data;
+        const { original_url, custom_alias, expires_at, password, is_active } = parsedData.data;
 
         const url = await Url.findOne({
             user_id: userId,
@@ -223,16 +215,36 @@ export const updateUrl = async (req: AuthRequest, res: Response) => {
             });    
         }
         
+        const expiresDate = expires_at ? new Date(expires_at) : undefined;
+        if (expiresDate && expiresDate <= new Date()) {
+            return res.status(400).json({
+                success: false, 
+                error: "Invalid expiration date: Date must be in the future."
+            });
+        }
+
+        const updateData = Object.fromEntries(
+            Object.entries({
+                original_url,
+                custom_alias,
+                is_active,
+                expires_at: expiresDate
+            }).filter(([_, v]) => v !== undefined)
+        );
+
+        // Protect URL to password
+        if (password === "") {
+            updateData.password_protected = false;
+            updateData.password_hash = "";
+        } else if (password !== undefined) {
+            const hashedPassword = await hashPassword(password);
+            updateData.password_protected = true;
+            updateData.password_hash = hashedPassword;
+        } 
+
         await Url.updateOne(
-            {
-                _id: url_id
-            },
-            {
-                $set: { original_url, custom_alias, expires_at }
-            },
-            { 
-                upsert: true
-            }
+            { _id: url_id },
+            { $set: updateData }
         );
 
         return res.status(200).json({

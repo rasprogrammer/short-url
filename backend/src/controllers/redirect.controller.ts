@@ -5,6 +5,8 @@ import { getClientIp } from "get-client-ip";
 import { getUserDeviceType } from "../utils/userDevice.js";
 import prompt from "prompt-sync";
 import { verifyPassword } from "../utils/bcrypt.js";
+import { findUrlByShortCode, isUrlActive, isUrlExpired } from "../services/url.service.js";
+import { incrementClickCount, logClick } from "../services/click.service.js";
 
 
 export const getOriginalUrl = async (req: Request, res: Response) => {
@@ -18,14 +20,8 @@ export const getOriginalUrl = async (req: Request, res: Response) => {
             });
         }
 
-        const url = await Url.findOne({
-            $or: [
-                { custom_alias: short_code },
-                { short_code }
-            ]
-        });
+        const url = await findUrlByShortCode(short_code as string);
 
-        // URL exists or not
         if (!url) {
             return res.status(404).json({
                 success: false,
@@ -33,47 +29,26 @@ export const getOriginalUrl = async (req: Request, res: Response) => {
             });
         };
 
-        // Expire Date URL should not be opened
-        if (url.expires_at && new Date(url.expires_at) <= new Date()) {
-            return res.status(401).json({
-                success: false, 
-                error: "URL has been expired"
+
+        if (isUrlExpired(url.expires_at as Date)) {
+            return res.status(410).json({
+                success: false,
+                error: "URL has expired"
             });
         }
 
-        if (url.password_protected) {
-            return res.send(`
-                <html>
-                    <body>
-                        <h2>This link is protected</h2>
-                        <form method="POST" action="/verify-password">
-                            <input type="hidden" name="short_code" value="${url.short_code}" />
-                            <input type="password" name="password" placeholder="Enter password" />
-                            <button type="submit">Submit</button>
-                        </form>
-                    </body>
-                </html>
-            `);
+        if (!isUrlActive(url.is_active)) {
+            return res.status(410).json({
+                success: false,
+                error: "URL has disabled"
+            });
         }
         
-        const ip_address = getClientIp(req as any) || req.ip;
-        const user_agent = req.get('User-Agent');
-        const referer = req.get('Referrer');
-
-        // Store click logs in DB
-        await UrlClick.create({
-            url_id: url._id,
-            ip_address,
-            user_agent,
-            referer,
-            device_type: getUserDeviceType(),
-        });
-
-        // Increment link click count
-        await Url.updateOne(
-            { _id: url._id },
-            { $inc: { click_count: 1 }}
-        );
+        if (url.password_protected) {
+            return res.send(getPasswordHTML(url.short_code));
+        }
+        
+        await handleRedirect(req, url);
 
         return res.redirect(url.original_url);
 
@@ -90,17 +65,27 @@ export const verifyPasswordRequest = async (req: Request, res: Response) => {
 
     const { short_code, password } = req.body;
 
-    const url = await Url.findOne({
-        $or: [{ custom_alias: short_code }, { short_code }]
-    });
-
-    // URL exists or not
+    const url = await findUrlByShortCode(short_code);
     if (!url) {
         return res.status(404).json({
             success: false,
             error: "Invalid URL"
         });
     };
+
+    if (isUrlExpired(url.expires_at)) {
+        return res.status(410).json({
+            success: false,
+            error: "URL has expired"
+        });
+    }
+
+    if (!isUrlActive(url.is_active)) {
+        return res.status(410).json({
+            success: false,
+            error: "URL has disabled"
+        });
+    }
 
     // Validate password  
     if (url.password_protected && url.password_hash) {
@@ -113,20 +98,34 @@ export const verifyPasswordRequest = async (req: Request, res: Response) => {
         }
     }
 
-    // Log click after validation
-    await UrlClick.create({
-        url_id: url._id,
-        ip_address: req.ip,
-        user_agent: req.get("User-Agent"),
-        referer: req.get('Referrer'),
-        device_type: getUserDeviceType(),
-    });
-
-    // Increment link click count
-    await Url.updateOne(
-        { _id: url._id },
-        { $inc: { click_count: 1 }}
-    );
+    await handleRedirect(req, url);
 
     return res.redirect(url.original_url);
 };
+
+export const handleRedirect = async (req: Request, url: any) => {
+    const ip_address = getClientIp(req as any) || req.ip;
+
+    await logClick({
+        url_id: url._id,
+        ip_address,
+        user_agent: req.get("User-Agent"),
+        referer: req.get("Referrer"),
+        device_type: getUserDeviceType(),
+    });
+
+    await incrementClickCount(url._id);
+};
+
+export const getPasswordHTML = (short_code: string) => {
+    return `<html>
+                <body>
+                    <h2>This link is protected</h2>
+                    <form method="POST" action="/verify-password">
+                        <input type="hidden" name="short_code" value="${short_code}" />
+                        <input type="password" name="password" placeholder="Enter password" />
+                        <button type="submit">Submit</button>
+                    </form>
+                </body>
+            </html>`;
+}
