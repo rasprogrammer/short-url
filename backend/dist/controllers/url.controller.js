@@ -115,13 +115,13 @@ export const getAllUrls = async (req, res) => {
 export const getUrl = async (req, res) => {
     try {
         const userId = req.auth?.id;
+        const url_id = req.params.id;
         if (!userId) {
             return res.status(401).json({
                 success: false,
                 error: "Unauthorized user"
             });
         }
-        const url_id = req.params.id;
         if (!url_id) {
             return res.status(400).json({
                 success: false,
@@ -157,13 +157,13 @@ export const getUrl = async (req, res) => {
 export const updateUrl = async (req, res) => {
     try {
         const userId = req.auth?.id;
+        const url_id = req.params.id;
         if (!userId) {
             return res.status(401).json({
                 success: false,
                 error: "Unauthorized user"
             });
         }
-        const url_id = req.params.id;
         if (!url_id) {
             return res.status(400).json({
                 success: false,
@@ -228,13 +228,13 @@ export const updateUrl = async (req, res) => {
 export const deleteUrl = async (req, res) => {
     try {
         const userId = req.auth?.id;
+        const url_id = req.params.id;
         if (!userId) {
             return res.status(401).json({
                 success: false,
                 error: "Unauthorized user"
             });
         }
-        const url_id = req.params.id;
         if (!url_id) {
             return res.status(400).json({
                 success: false,
@@ -271,37 +271,35 @@ export const deleteUrl = async (req, res) => {
 export const getUrlAnalytics = async (req, res) => {
     try {
         const userId = req.auth?.id;
+        const url_id = req.params.id;
         if (!userId) {
             return res.status(401).json({
                 success: false,
                 error: "Unauthorized user"
             });
         }
-        const url_id = req.params.id;
         if (!url_id) {
             return res.status(400).json({
                 success: false,
                 error: "URL id not provided"
             });
         }
-        const url = await Url.findOne({
-            user_id: userId,
-            _id: url_id
-        });
-        if (!url) {
-            return res.status(404).json({
-                success: false,
-                error: "URL not found"
-            });
-        }
-        const urlAnalytics = await UrlClick.find({
-            url_id
-        });
+        const totalClicks = await UrlClick.countDocuments({ url_id });
+        const countryStats = await UrlClick.aggregate([
+            { $match: { url_id } },
+            { $group: { _id: "$country", count: { $sum: 1 } } }
+        ]);
+        const deviceStats = await UrlClick.aggregate([
+            { $match: { url_id } },
+            { $group: { _id: "$device_type", count: { $sum: 1 } } }
+        ]);
         return res.status(200).json({
             success: true,
-            message: "URL Analytics details fetched successfully",
+            message: "URL Analytics fetched successfully",
             data: {
-                urlAnalytics
+                totalClicks,
+                countryStats,
+                deviceStats
             }
         });
     }
@@ -316,17 +314,13 @@ export const getUrlAnalytics = async (req, res) => {
 export const getClickLogs = async (req, res) => {
     try {
         const userId = req.auth?.id;
+        const url_id = req.params.id;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
         if (!userId) {
             return res.status(401).json({
                 success: false,
                 error: "Unauthorized user"
-            });
-        }
-        const url_id = req.params.id;
-        if (!url_id) {
-            return res.status(400).json({
-                success: false,
-                error: "URL id not provided"
             });
         }
         const url = await Url.findOne({
@@ -339,14 +333,27 @@ export const getClickLogs = async (req, res) => {
                 error: "URL not found"
             });
         }
-        const urlDetails = await UrlClick.find({
-            url_id
-        });
+        const filter = { url_id };
+        // Optional filters
+        if (req.query.country) {
+            filter.country = req.query.country;
+        }
+        if (req.query.device) {
+            filter.device_type = req.query.device;
+        }
+        const total = await UrlClick.countDocuments(filter);
+        const clicks = await UrlClick.find(filter)
+            .sort({ created_at: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
         return res.status(200).json({
             success: true,
-            message: "URL click logs fetched successfully",
-            data: {
-                urlDetails
+            data: clicks,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
             }
         });
     }
