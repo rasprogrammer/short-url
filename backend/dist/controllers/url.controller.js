@@ -3,6 +3,7 @@ import Url from "../models/urlModel.js";
 import { CreateShortURLSchema, UpdateShortURLSchema } from "../validations/url.js";
 import { BASE_URL } from "../config/env.js";
 import UrlClick from "../models/urlClickModel.js";
+import { hashPassword } from "../utils/bcrypt.js";
 export const createShortURL = async (req, res) => {
     try {
         const userId = req.auth?.id;
@@ -12,6 +13,7 @@ export const createShortURL = async (req, res) => {
                 error: "Unauthorized user"
             });
         }
+        // Validation
         const parsedData = CreateShortURLSchema.safeParse(req.body);
         if (!parsedData.success) {
             return res.status(400).json({
@@ -20,13 +22,54 @@ export const createShortURL = async (req, res) => {
             });
         }
         const { original_url, custom_alias, expires_at, password } = parsedData.data;
-        const shortCode = generateShortCode();
+        // Generate short code 
+        let shortCode = generateShortCode();
+        console.log('before custom alias');
+        // Validate custom alias
+        if (typeof custom_alias === 'string' && custom_alias.length > 0) {
+            const base62Regex = /^[0-9a-zA-Z]+$/;
+            if (!base62Regex.test(custom_alias)) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Please input valid custom alias"
+                });
+            }
+            shortCode = custom_alias;
+        }
+        console.log('after custom alias');
+        // Validate this Short URL already exist in database or not
+        const existingShorURL = await Url.findOne({
+            $or: [
+                { short_code: shortCode },
+                { custom_alias: shortCode }
+            ]
+        });
+        if (existingShorURL) {
+            return res.status(409).json({
+                success: false,
+                error: "Short URL already exists."
+            });
+        }
+        const expiresDate = expires_at ? new Date(expires_at) : undefined;
+        if (expiresDate && expiresDate <= new Date()) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid expiration date: Date must be in the future."
+            });
+        }
+        console.log('before password');
+        // Protect URL to password
+        const hashedPassword = password ? await hashPassword(password) : null;
+        console.log('after password');
+        // Create short URL in db 
         await Url.create({
             user_id: userId,
             original_url,
             short_code: shortCode,
             custom_alias,
-            expires_at
+            expires_at: expiresDate,
+            password_protected: hashedPassword ? true : false,
+            password_hash: hashedPassword ? hashedPassword : '',
         });
         return res.status(201).json({
             success: true,
