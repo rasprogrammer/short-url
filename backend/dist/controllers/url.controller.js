@@ -348,13 +348,16 @@ export const getClickLogs = async (req, res) => {
             .limit(limit);
         return res.status(200).json({
             success: true,
-            data: clicks,
-            meta: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit)
-            }
+            message: "URL click logs fetched successfully",
+            data: {
+                clicks,
+                meta: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit)
+                }
+            },
         });
     }
     catch (error) {

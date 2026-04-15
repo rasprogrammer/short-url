@@ -1,30 +1,66 @@
 import type { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt.js";
 import type { AuthRequest } from "../utils/request-types.js";
+import ApiKey from "../models/apiKeyModel.js";
 
 
-export const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const auth = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const token = req.headers.authorization?.split(" ")[1];
-        if (!token) {
-            res.status(401).json({
-                success: false,
-                error: "Access denied: No token provided"
-            });
-            return;
+        // JWT Based Authentication 
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+
+            const token = authHeader.split(" ")[1];
+            if (!token) {
+                return res.status(401).json({
+                    success: false,
+                    error: "Access denied: No token provided"
+                });
+            }
+
+            const decoded = verifyToken(token);
+            if (!decoded) {
+                return res.status(401).json({
+                    success: false,
+                    error: "Invalid token"
+                });
+            }
+
+            req.auth = {
+                id: decoded.id,
+                type: "user"
+            }
+
+            return next();
         }
 
-        const decoded = verifyToken(token);
-        if (!decoded) {
-            res.status(401).json({
-                success: false,
-                error: "Invalid token"
+        // API Key Based Authenticate 
+        const apiKey = req.headers["x-api-key"] as string;
+        if (apiKey) {
+            
+            const key = await ApiKey.findOne({
+                api_key: apiKey, is_active: true
             });
-            return;
+
+            if (!key) {
+                return res.status(401).json({
+                    success: false,
+                    error: "Invalid API Key"
+                });
+            }
+
+            req.auth = {
+                id: key.user_id?.toString()!,
+                type: 'api'
+            }
+
+            return next();
         }
 
-        req.auth = { id: decoded.id };
-        next();
+        return res.status(401).json({
+            success: false,
+            error: "Access denied"
+        });
 
     } catch (error) {
         res.status(500).json({
