@@ -58,6 +58,8 @@ export const verifyDomain = async (req: AuthRequest, res: Response) => {
     try {
 
         const userId = req.auth?.id;
+        const domainId = req.params.id;
+
         if (!userId) {
             return res.status(401).json({
                 success: false, 
@@ -65,7 +67,6 @@ export const verifyDomain = async (req: AuthRequest, res: Response) => {
             });
         }
         
-        const domainId = req.params.id;
         if (!domainId) {
             return res.status(404).json({
                 success: false, 
@@ -77,6 +78,7 @@ export const verifyDomain = async (req: AuthRequest, res: Response) => {
             _id: domainId,
             user_id: userId
         });
+        
         if (!domain) {
             return res.status(404).json({
                 success: false, 
